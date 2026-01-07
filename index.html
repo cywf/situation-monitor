@@ -315,18 +315,24 @@
             width: 100%;
             height: 350px;
             position: relative;
-            background: var(--bg);
-            overflow: hidden;
+            background: #050505;
+            overflow: visible;
         }
 
         .world-map svg {
             width: 100%;
             height: 100%;
+            display: block;
         }
 
         .world-map .land {
-            fill: #1a1a1a;
-            stroke: #2a2a2a;
+            fill: #1e1e1e;
+            stroke: #333;
+            stroke-width: 0.5;
+        }
+
+        .world-map .grid-line {
+            stroke: #151515;
             stroke-width: 0.5;
         }
 
@@ -470,6 +476,21 @@
     </header>
 
     <main class="dashboard">
+        <!-- Global Intelligence Map -->
+        <section class="panel" style="grid-column: span 4;">
+            <div class="panel-header">
+                <span class="panel-title">Global Activity Monitor</span>
+                <span class="panel-count" id="mapLegend">
+                    <span style="color: var(--green);">● Low</span>
+                    <span style="color: var(--yellow); margin-left: 0.5rem;">● Elevated</span>
+                    <span style="color: var(--red); margin-left: 0.5rem;">● High</span>
+                </span>
+            </div>
+            <div class="panel-content" id="mapPanel" style="max-height: none; height: 350px; overflow: hidden;">
+                <div class="loading-msg">Loading map...</div>
+            </div>
+        </section>
+
         <!-- Political / World News -->
         <section class="panel">
             <div class="panel-header">
@@ -556,20 +577,6 @@
             </div>
         </section>
 
-        <!-- Global Intelligence Map -->
-        <section class="panel" style="grid-column: span 4;">
-            <div class="panel-header">
-                <span class="panel-title">Global Activity Monitor</span>
-                <span class="panel-count" id="mapLegend">
-                    <span style="color: var(--green);">● Low</span>
-                    <span style="color: var(--yellow); margin-left: 0.5rem;">● Elevated</span>
-                    <span style="color: var(--red); margin-left: 0.5rem;">● High</span>
-                </span>
-            </div>
-            <div class="panel-content" id="mapPanel" style="max-height: 400px; overflow: hidden;">
-                <div class="loading-msg">Loading map...</div>
-            </div>
-        </section>
     </main>
 
     <script>
@@ -884,22 +891,45 @@
         function renderGlobalMap(activityData) {
             const panel = document.getElementById('mapPanel');
 
-            // Simple world map SVG (equirectangular)
+            // Better world map with grid lines
             const mapSVG = `
-                <svg viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#1a1a1a" stroke-width="0.5"/>
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid)"/>
-                    <!-- Simplified continent outlines -->
-                    <path class="land" d="M150,120 Q200,100 280,110 Q320,105 350,120 Q380,140 370,180 Q350,220 300,240 Q250,250 200,230 Q160,200 150,160 Z" /> <!-- North America -->
-                    <path class="land" d="M250,280 Q280,260 300,280 Q320,320 310,380 Q280,420 250,400 Q230,360 240,320 Z" /> <!-- South America -->
-                    <path class="land" d="M440,100 Q520,90 580,100 Q620,110 640,140 Q650,180 620,200 Q580,220 520,210 Q470,200 450,170 Q440,140 440,100 Z" /> <!-- Europe -->
-                    <path class="land" d="M480,220 Q580,200 650,240 Q700,280 680,340 Q620,400 550,380 Q490,340 470,290 Q460,250 480,220 Z" /> <!-- Africa -->
-                    <path class="land" d="M650,80 Q750,70 850,100 Q900,140 880,200 Q850,260 780,280 Q700,290 660,250 Q630,200 640,150 Q650,100 650,80 Z" /> <!-- Asia -->
-                    <path class="land" d="M800,320 Q860,300 900,340 Q920,400 880,420 Q820,430 790,400 Q770,360 800,320 Z" /> <!-- Australia -->
+                <svg viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" style="background: #050505;">
+                    <!-- Grid lines -->
+                    <g class="grid-lines" opacity="0.3">
+                        ${[...Array(19)].map((_, i) => `<line x1="0" y1="${i * 27.78}" x2="1000" y2="${i * 27.78}" stroke="#222" stroke-width="0.5"/>`).join('')}
+                        ${[...Array(37)].map((_, i) => `<line x1="${i * 27.78}" y1="0" x2="${i * 27.78}" y2="500" stroke="#222" stroke-width="0.5"/>`).join('')}
+                    </g>
+                    <!-- Simplified but better continent shapes -->
+                    <g class="continents">
+                        <!-- North America -->
+                        <path class="land" d="M80,90 L120,70 L180,65 L220,75 L260,70 L280,90 L275,120 L290,140 L280,170 L250,180 L230,200 L200,210 L170,200 L140,220 L120,200 L100,180 L80,160 L70,130 L75,100 Z"/>
+                        <!-- Central America -->
+                        <path class="land" d="M170,200 L200,210 L210,230 L190,260 L175,270 L165,250 L170,230 Z"/>
+                        <!-- South America -->
+                        <path class="land" d="M190,260 L220,250 L260,270 L280,300 L290,350 L280,400 L250,430 L220,420 L200,380 L190,340 L185,300 L175,270 Z"/>
+                        <!-- Europe -->
+                        <path class="land" d="M440,70 L480,60 L520,65 L550,80 L560,100 L540,120 L510,130 L480,125 L460,140 L440,130 L430,100 L435,80 Z"/>
+                        <!-- UK -->
+                        <path class="land" d="M420,80 L435,75 L440,90 L430,100 L420,95 Z"/>
+                        <!-- Africa -->
+                        <path class="land" d="M440,160 L480,150 L530,160 L560,190 L580,230 L590,280 L580,330 L550,370 L510,390 L470,380 L440,350 L430,300 L435,250 L450,200 Z"/>
+                        <!-- Middle East -->
+                        <path class="land" d="M540,140 L580,130 L620,150 L610,180 L580,190 L550,180 L540,160 Z"/>
+                        <!-- Russia/Asia -->
+                        <path class="land" d="M560,60 L650,40 L750,35 L850,50 L900,70 L920,100 L900,130 L850,140 L800,130 L750,140 L700,135 L650,145 L600,130 L560,100 Z"/>
+                        <!-- China/East Asia -->
+                        <path class="land" d="M700,140 L780,130 L830,150 L850,180 L840,220 L800,240 L750,235 L710,210 L690,180 L695,155 Z"/>
+                        <!-- India -->
+                        <path class="land" d="M620,160 L670,155 L690,180 L700,220 L680,260 L640,280 L610,260 L600,220 L610,190 Z"/>
+                        <!-- Southeast Asia -->
+                        <path class="land" d="M750,235 L780,230 L810,250 L800,280 L770,290 L740,270 L745,250 Z"/>
+                        <!-- Japan -->
+                        <path class="land" d="M870,140 L885,135 L895,150 L890,170 L875,175 L865,160 Z"/>
+                        <!-- Australia -->
+                        <path class="land" d="M780,320 L850,310 L900,330 L920,370 L900,410 L850,420 L800,400 L780,360 Z"/>
+                        <!-- New Zealand -->
+                        <path class="land" d="M930,400 L945,395 L950,420 L940,430 L930,415 Z"/>
+                    </g>
                 </svg>
             `;
 
