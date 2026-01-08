@@ -220,13 +220,10 @@ export function updateFlashback(hoursAgo) {
 
 // Render the global map
 export async function renderGlobalMap(activityData, earthquakes = [], allNews = [], mapLayers, getMonitorHotspots, fetchFlightData, classifyAircraft, getAircraftArrow) {
-    console.log('renderGlobalMap called', { activityData, earthquakesCount: earthquakes.length, allNewsCount: allNews.length, mapLayers });
-
     // Cache allNews for popup access
     window.cachedAllNews = allNews;
 
     const panel = document.getElementById('mapPanel');
-    console.log('mapPanel element:', panel);
     const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
     const isUSView = mapViewMode === 'us';
@@ -322,10 +319,6 @@ export async function renderGlobalMap(activityData, earthquakes = [], allNews = 
             .center([0, 0])
             .translate([width / 2, height / 2]);
     }
-
-    // Test projection
-    const testCoord = projection([-77, 38.9]); // DC coordinates
-    console.log('Projection test (DC):', { input: [-77, 38.9], output: testCoord, width, height });
 
     const path = d3.geoPath().projection(projection);
 
@@ -809,26 +802,7 @@ export async function renderGlobalMap(activityData, earthquakes = [], allNews = 
         </div>
     `;
 
-    // Debug logging
-    console.log('Map render debug:', {
-        isRegionalView,
-        mapViewMode,
-        width,
-        height,
-        hotspotCount: INTEL_HOTSPOTS.length,
-        conflictCount: CONFLICT_ZONES.length,
-        chokepointCount: SHIPPING_CHOKEPOINTS.length,
-        overlaysHTMLLength: overlaysHTML.length,
-        mapOverlaysElement: document.getElementById('mapOverlays')
-    });
-
-    const mapOverlaysEl = document.getElementById('mapOverlays');
-    if (mapOverlaysEl) {
-        mapOverlaysEl.innerHTML = overlaysHTML;
-        console.log('Overlays inserted, child count:', mapOverlaysEl.children.length);
-    } else {
-        console.error('mapOverlays element not found!');
-    }
+    document.getElementById('mapOverlays').innerHTML = overlaysHTML;
 
     // Initialize map pan functionality
     initMapPan();
