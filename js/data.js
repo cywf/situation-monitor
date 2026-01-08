@@ -445,7 +445,7 @@ export async function fetchEarthquakes() {
 
         return data.features.map(f => ({
             id: f.id,
-            magnitude: f.properties.mag,
+            mag: f.properties.mag,
             place: f.properties.place,
             time: new Date(f.properties.time),
             lat: f.geometry.coordinates[1],
