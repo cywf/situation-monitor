@@ -74,7 +74,7 @@ for server in "${SERVERS_AVAILABLE[@]}"; do
             ;;
         node)
             OPTIONS+=("Node.js HTTP Server (port 8000)")
-            COMMANDS+=("npm run start 2>/dev/null || npx http-server -p 8000")
+            COMMANDS+=("npm run start || npx http-server -p 8000")
             ;;
         npx)
             OPTIONS+=("NPX HTTP Server (port 8000)")

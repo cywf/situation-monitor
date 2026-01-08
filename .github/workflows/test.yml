@@ -83,9 +83,13 @@ jobs:
     - name: Check for secrets
       run: |
         echo "Checking for potential secrets in code..."
-        ! grep -r "api[_-]key\s*=\s*['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential API key found" && exit 0)
-        ! grep -r "password\s*=\s*['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential password found" && exit 0)
-        ! grep -r "secret\s*=\s*['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential secret found" && exit 0)
+        # More comprehensive secret patterns
+        ! grep -rE "(api[_-]?key|apikey)\s*[:=]\s*['\"][^'\"]{8,}['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential API key found" && exit 0)
+        ! grep -rE "(password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{3,}['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential password found" && exit 0)
+        ! grep -rE "(secret|token|auth)\s*[:=]\s*['\"][^'\"]{8,}['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential secret found" && exit 0)
+        ! grep -rE "['\"]sk-[a-zA-Z0-9]{32,}['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential OpenAI key found" && exit 0)
+        ! grep -rE "-----BEGIN (RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----" --include="*.js" --include="*.html" --include="*.pem" . || (echo "Warning: Private key found" && exit 0)
+        echo "Secret scan completed"
   
   build-check:
     name: Build Verification
