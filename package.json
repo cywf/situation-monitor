@@ -1,0 +1,48 @@
+{
+  "name": "sa-dash",
+  "version": "1.0.0",
+  "description": "Situation Awareness Dashboard - Real-time intelligence monitoring and analysis platform",
+  "type": "module",
+  "main": "js/main.js",
+  "scripts": {
+    "start": "npx http-server -p 8000 -o",
+    "dev": "npx http-server -p 8000 -c-1",
+    "test": "node test-node.mjs",
+    "test:browser": "npx http-server -p 8000 -o test-modules.html",
+    "validate": "node test-node.mjs",
+    "serve": "python3 -m http.server 8000",
+    "lint": "eslint js/**/*.js",
+    "format": "prettier --write '**/*.{js,html,css,md}'"
+  },
+  "keywords": [
+    "dashboard",
+    "intelligence",
+    "monitoring",
+    "situational-awareness",
+    "geopolitical",
+    "real-time",
+    "data-visualization",
+    "d3",
+    "map",
+    "analytics"
+  ],
+  "author": "cywf",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cywf/sa-dash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cywf/sa-dash/issues"
+  },
+  "homepage": "https://github.com/cywf/sa-dash#readme",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "http-server": "^14.1.1",
+    "prettier": "^3.2.4"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
