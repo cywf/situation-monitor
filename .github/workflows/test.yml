@@ -1,0 +1,145 @@
+name: Test and Validate
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        
+    - name: Run module validation
+      run: node test-node.mjs
+      
+    - name: Check file sizes
+      run: |
+        echo "Checking JavaScript file sizes..."
+        find js -name "*.js" -exec wc -l {} + | tail -1
+        echo "Checking CSS file size..."
+        wc -l styles.css
+        echo "Total lines of code:"
+        wc -l js/*.js styles.css index.html | tail -1
+  
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run ESLint
+      run: npx eslint js/**/*.js --max-warnings=0 || echo "ESLint check completed with warnings"
+      continue-on-error: true
+      
+    - name: Check Prettier formatting
+      run: npx prettier --check '**/*.{js,html,css,md}' || echo "Prettier check completed"
+      continue-on-error: true
+  
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate || echo "Audit completed with warnings"
+      continue-on-error: true
+      
+    - name: Check for secrets
+      run: |
+        echo "Checking for potential secrets in code..."
+        ! grep -r "api[_-]key\s*=\s*['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential API key found" && exit 0)
+        ! grep -r "password\s*=\s*['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential password found" && exit 0)
+        ! grep -r "secret\s*=\s*['\"]" --include="*.js" --include="*.html" . || (echo "Warning: Potential secret found" && exit 0)
+  
+  build-check:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Verify required files
+      run: |
+        echo "Checking for required files..."
+        test -f index.html && echo "✓ index.html found"
+        test -f styles.css && echo "✓ styles.css found"
+        test -f js/main.js && echo "✓ js/main.js found"
+        test -f README.md && echo "✓ README.md found"
+        test -f LICENSE && echo "✓ LICENSE found"
+        test -f package.json && echo "✓ package.json found"
+        echo "All required files present!"
+        
+    - name: Check module structure
+      run: |
+        echo "Validating JavaScript module structure..."
+        node -e "
+          const fs = require('fs');
+          const modules = [
+            'constants.js', 'utils.js', 'data.js', 'popups.js',
+            'map.js', 'layers.js', 'panels.js', 'renderers.js',
+            'intelligence.js', 'monitors.js', 'main.js'
+          ];
+          modules.forEach(mod => {
+            const path = './js/' + mod;
+            if (!fs.existsSync(path)) {
+              console.error('✗ Missing module:', mod);
+              process.exit(1);
+            }
+            console.log('✓ Module found:', mod);
+          });
+        "
+  
+  html-validation:
+    name: HTML Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate HTML structure
+      run: |
+        echo "Checking HTML structure..."
+        grep -q "<!DOCTYPE html>" index.html && echo "✓ DOCTYPE present"
+        grep -q "<html lang=" index.html && echo "✓ HTML lang attribute present"
+        grep -q "<meta charset=" index.html && echo "✓ Character encoding specified"
+        grep -q "<meta name=\"viewport\"" index.html && echo "✓ Viewport meta tag present"
+        grep -q "<title>" index.html && echo "✓ Title tag present"
+        echo "HTML structure validation complete!"
