@@ -69,3 +69,56 @@ export function latLonToXY(lat, lon, width, height) {
     const y = ((90 - lat) / 180) * height;
     return { x, y };
 }
+
+// Setup ResizeObserver for a panel to handle visibility changes
+// Calls callback when element becomes visible or changes size
+export function observePanelResize(elementId, callback) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.warn(`Element ${elementId} not found for resize observation`);
+        return null;
+    }
+
+    // Check if ResizeObserver is supported
+    if (typeof ResizeObserver === 'undefined') {
+        console.warn('ResizeObserver not supported in this browser');
+        return null;
+    }
+
+    const observer = new ResizeObserver(entries => {
+        for (const entry of entries) {
+            // Only trigger callback if element has non-zero size
+            if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+                callback(entry.contentRect);
+            }
+        }
+    });
+
+    observer.observe(element);
+    return observer;
+}
+
+// Debounce function to limit callback rate
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Throttle function to limit callback rate (executes immediately)
+export function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}

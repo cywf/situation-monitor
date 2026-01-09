@@ -484,10 +484,10 @@ export async function renderGlobalMap(activityData, earthquakes = [], allNews = 
                     .attr('fill', 'none')
                     .attr('stroke', '#2a8070')
                     .attr('stroke-width', 1.5);
-            }
         }
+    }
 
-        // Regional view country highlighting
+    // Regional view country highlighting
         if (isMidEastView) {
             const MIDEAST_COUNTRIES = ['SAU', 'ARE', 'QAT', 'KWT', 'BHR', 'OMN', 'IRN', 'IRQ', 'SYR', 'LBN', 'JOR', 'ISR', 'PSE', 'YEM', 'EGY', 'TUR', 'CYP', 'AFG', 'PAK'];
             svg.append('g')
@@ -623,7 +623,6 @@ export async function renderGlobalMap(activityData, earthquakes = [], allNews = 
                 }
             });
         }
-    }
 
     // Helper to convert lon/lat to percentage
     const toPercent = (lon, lat) => {

@@ -7,22 +7,33 @@ import { isPanelEnabled } from './panels.js';
 export function renderNews(items, panelId, countId) {
     const panel = document.getElementById(panelId);
     const count = document.getElementById(countId);
-
-    if (items.length === 0) {
-        panel.innerHTML = '<div class="error-msg">Failed to load</div>';
-        count.textContent = '0';
+    
+    if (!panel) {
+        console.error(`Panel not found: ${panelId}`);
         return;
     }
 
-    panel.innerHTML = items.map(item => `
-        <div class="item ${item.isAlert ? 'alert' : ''}">
-            <div class="item-source">${item.source}${item.isAlert ? '<span class="alert-tag">ALERT</span>' : ''}</div>
-            <a class="item-title" href="${item.link}" target="_blank">${item.title}</a>
-            <div class="item-time">${timeAgo(item.pubDate)}</div>
-        </div>
-    `).join('');
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        panel.innerHTML = '<div class="error-msg">No data available</div>';
+        if (count) count.textContent = '0';
+        return;
+    }
 
-    count.textContent = items.length;
+    try {
+        panel.innerHTML = items.map(item => `
+            <div class="item ${item.isAlert ? 'alert' : ''}">
+                <div class="item-source">${escapeHtml(item.source || 'Unknown')}${item.isAlert ? '<span class="alert-tag">ALERT</span>' : ''}</div>
+                <a class="item-title" href="${escapeHtml(item.link || '#')}" target="_blank">${escapeHtml(item.title || 'No title')}</a>
+                <div class="item-time">${timeAgo(item.pubDate)}</div>
+            </div>
+        `).join('');
+
+        if (count) count.textContent = items.length;
+    } catch (error) {
+        console.error(`Error rendering ${panelId}:`, error);
+        panel.innerHTML = '<div class="error-msg">Rendering error</div>';
+        if (count) count.textContent = '0';
+    }
 }
 
 // Render markets
@@ -30,93 +41,124 @@ export function renderMarkets(markets) {
     const panel = document.getElementById('marketsPanel');
     const count = document.getElementById('marketsCount');
 
-    if (markets.length === 0) {
-        panel.innerHTML = '<div class="error-msg">Failed to load</div>';
-        count.textContent = '0';
+    if (!panel) {
+        console.error('Markets panel not found');
         return;
     }
 
-    panel.innerHTML = markets.map(m => {
-        const changeClass = m.change > 0 ? 'up' : m.change < 0 ? 'down' : '';
-        const changeText = m.change !== null ? `${m.change > 0 ? '+' : ''}${m.change.toFixed(2)}%` : '-';
-        const priceDisplay = typeof m.price === 'number' && m.price > 100
-            ? m.price.toLocaleString('en-US', { maximumFractionDigits: 0 })
-            : m.price?.toFixed(2);
+    if (!markets || !Array.isArray(markets) || markets.length === 0) {
+        panel.innerHTML = '<div class="error-msg">No market data available</div>';
+        if (count) count.textContent = '0';
+        return;
+    }
 
-        return `
-            <div class="market-item">
-                <div>
-                    <div class="market-name">${m.name}</div>
-                    <div class="market-symbol">${m.symbol}</div>
-                </div>
-                <div class="market-data">
-                    <div class="market-price">$${priceDisplay}</div>
-                    <div class="market-change ${changeClass}">${changeText}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
+    try {
+        panel.innerHTML = markets.map(m => {
+            const changeClass = m.change > 0 ? 'up' : m.change < 0 ? 'down' : '';
+            const changeText = m.change !== null && m.change !== undefined ? `${m.change > 0 ? '+' : ''}${m.change.toFixed(2)}%` : '-';
+            const priceDisplay = typeof m.price === 'number' && m.price > 100
+                ? m.price.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                : (typeof m.price === 'number' ? m.price.toFixed(2) : '-');
 
-    count.textContent = markets.length;
+            return `
+                <div class="market-item">
+                    <div>
+                        <div class="market-name">${escapeHtml(m.name || 'Unknown')}</div>
+                        <div class="market-symbol">${escapeHtml(m.symbol || '-')}</div>
+                    </div>
+                    <div class="market-data">
+                        <div class="market-price">$${priceDisplay}</div>
+                        <div class="market-change ${changeClass}">${changeText}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        if (count) count.textContent = markets.length;
+    } catch (error) {
+        console.error('Error rendering markets:', error);
+        panel.innerHTML = '<div class="error-msg">Rendering error</div>';
+        if (count) count.textContent = '0';
+    }
 }
 
 // Render sector heatmap
 export function renderHeatmap(sectors) {
     const panel = document.getElementById('heatmapPanel');
 
-    if (sectors.length === 0) {
-        panel.innerHTML = '<div class="error-msg">Failed to load</div>';
+    if (!panel) {
+        console.error('Heatmap panel not found');
         return;
     }
 
-    panel.innerHTML = '<div class="heatmap">' + sectors.map(s => {
-        let colorClass = 'up-0';
-        const c = s.change;
-        if (c >= 2) colorClass = 'up-3';
-        else if (c >= 1) colorClass = 'up-2';
-        else if (c >= 0.5) colorClass = 'up-1';
-        else if (c >= 0) colorClass = 'up-0';
-        else if (c >= -0.5) colorClass = 'down-0';
-        else if (c >= -1) colorClass = 'down-1';
-        else if (c >= -2) colorClass = 'down-2';
-        else colorClass = 'down-3';
+    if (!sectors || !Array.isArray(sectors) || sectors.length === 0) {
+        panel.innerHTML = '<div class="error-msg">No sector data available</div>';
+        return;
+    }
 
-        return `
-            <div class="heatmap-cell ${colorClass}">
-                <div class="sector-name">${s.name}</div>
-                <div class="sector-change">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</div>
-            </div>
-        `;
-    }).join('') + '</div>';
+    try {
+        panel.innerHTML = '<div class="heatmap">' + sectors.map(s => {
+            let colorClass = 'up-0';
+            const c = s.change || 0;
+            if (c >= 2) colorClass = 'up-3';
+            else if (c >= 1) colorClass = 'up-2';
+            else if (c >= 0.5) colorClass = 'up-1';
+            else if (c >= 0) colorClass = 'up-0';
+            else if (c >= -0.5) colorClass = 'down-0';
+            else if (c >= -1) colorClass = 'down-1';
+            else if (c >= -2) colorClass = 'down-2';
+            else colorClass = 'down-3';
+
+            return `
+                <div class="heatmap-cell ${colorClass}">
+                    <div class="sector-name">${escapeHtml(s.name || 'Unknown')}</div>
+                    <div class="sector-change">${c >= 0 ? '+' : ''}${c.toFixed(2)}%</div>
+                </div>
+            `;
+        }).join('') + '</div>';
+    } catch (error) {
+        console.error('Error rendering heatmap:', error);
+        panel.innerHTML = '<div class="error-msg">Rendering error</div>';
+    }
 }
 
 // Render commodities
 export function renderCommodities(commodities) {
     const panel = document.getElementById('commoditiesPanel');
 
-    if (commodities.length === 0) {
-        panel.innerHTML = '<div class="error-msg">Failed to load</div>';
+    if (!panel) {
+        console.error('Commodities panel not found');
         return;
     }
 
-    panel.innerHTML = commodities.map(m => {
-        const changeClass = m.change > 0 ? 'up' : m.change < 0 ? 'down' : '';
-        const changeText = `${m.change > 0 ? '+' : ''}${m.change.toFixed(2)}%`;
-        const priceDisplay = m.price?.toFixed(2);
+    if (!commodities || !Array.isArray(commodities) || commodities.length === 0) {
+        panel.innerHTML = '<div class="error-msg">No commodity data available</div>';
+        return;
+    }
 
-        return `
-            <div class="market-item">
-                <div>
-                    <div class="market-name">${m.name}</div>
-                    <div class="market-symbol">${m.symbol}</div>
+    try {
+        panel.innerHTML = commodities.map(m => {
+            const changeClass = m.change > 0 ? 'up' : m.change < 0 ? 'down' : '';
+            const changeText = `${m.change >= 0 ? '+' : ''}${(m.change || 0).toFixed(2)}%`;
+            const priceDisplay = typeof m.price === 'number' ? m.price.toFixed(2) : '-';
+
+            return `
+                <div class="market-item">
+                    <div>
+                        <div class="market-name">${escapeHtml(m.name || 'Unknown')}</div>
+                        <div class="market-symbol">${escapeHtml(m.symbol || '-')}</div>
+                    </div>
+                    <div class="market-data">
+                        <div class="market-price">${m.symbol === 'VIX' ? '' : '$'}${priceDisplay}</div>
+                        <div class="market-change ${changeClass}">${changeText}</div>
+                    </div>
                 </div>
-                <div class="market-data">
-                    <div class="market-price">${m.symbol === 'VIX' ? '' : '$'}${priceDisplay}</div>
-                    <div class="market-change ${changeClass}">${changeText}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error rendering commodities:', error);
+        panel.innerHTML = '<div class="error-msg">Rendering error</div>';
+    }
 }
 
 // Render Polymarket predictions
@@ -124,31 +166,43 @@ export function renderPolymarket(markets) {
     const panel = document.getElementById('polymarketPanel');
     const count = document.getElementById('polymarketCount');
 
-    if (markets.length === 0) {
-        panel.innerHTML = '<div class="error-msg">Failed to load predictions</div>';
-        count.textContent = '0';
+    if (!panel) {
+        console.error('Polymarket panel not found');
+        return;
+    }
+
+    if (!markets || !Array.isArray(markets) || markets.length === 0) {
+        panel.innerHTML = '<div class="error-msg">No prediction market data available</div>';
+        if (count) count.textContent = '0';
         return;
     }
 
     const formatVolume = (v) => {
+        if (!v || typeof v !== 'number') return '-';
         if (v >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M';
         if (v >= 1000) return '$' + (v / 1000).toFixed(0) + 'K';
         return '$' + v.toFixed(0);
     };
 
-    panel.innerHTML = markets.map(m => `
-        <div class="prediction-item">
-            <div>
-                <div class="prediction-question">${m.question}</div>
-                <div class="prediction-volume">Vol: ${formatVolume(m.volume)}</div>
+    try {
+        panel.innerHTML = markets.map(m => `
+            <div class="prediction-item">
+                <div>
+                    <div class="prediction-question">${escapeHtml(m.question || 'Unknown market')}</div>
+                    <div class="prediction-volume">Vol: ${formatVolume(m.volume)}</div>
+                </div>
+                <div class="prediction-odds">
+                    <span class="prediction-yes">${(m.yes || 0)}%</span>
+                </div>
             </div>
-            <div class="prediction-odds">
-                <span class="prediction-yes">${m.yes}%</span>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
 
-    count.textContent = markets.length;
+        if (count) count.textContent = markets.length;
+    } catch (error) {
+        console.error('Error rendering polymarket:', error);
+        panel.innerHTML = '<div class="error-msg">Rendering error</div>';
+        if (count) count.textContent = '0';
+    }
 }
 
 // Render congressional trades
@@ -156,9 +210,14 @@ export function renderCongressTrades(trades) {
     const panel = document.getElementById('congressPanel');
     const count = document.getElementById('congressCount');
 
-    if (trades.length === 0) {
-        panel.innerHTML = '<div class="error-msg">Unable to load congressional trade news</div>';
-        count.textContent = '0';
+    if (!panel) {
+        console.error('Congress panel not found');
+        return;
+    }
+
+    if (!trades || !Array.isArray(trades) || trades.length === 0) {
+        panel.innerHTML = '<div class="error-msg">No congressional trade data available</div>';
+        if (count) count.textContent = '0';
         return;
     }
 
