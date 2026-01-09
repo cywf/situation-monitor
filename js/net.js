@@ -338,7 +338,7 @@ export async function fetchWithProxy(url, options = {}) {
 /**
  * Fetch multiple URLs with structured error handling
  * Uses Promise.allSettled so partial failures don't block other requests
- * @param {Array<{url: string, options: object}>} requests - Array of request configs
+ * @param {Array<{url: string, options: object, source?: string}>} requests - Array of request configs
  * @returns {Promise<Array<{status: string, value?: any, reason?: Error, source: string}>>}
  */
 export async function fetchMultiple(requests) {
@@ -360,10 +360,19 @@ export async function fetchMultiple(requests) {
     });
     
     return Promise.allSettled(promises).then(results =>
-        results.map((result, index) => ({
-            ...result,
-            source: requests[index].source || requests[index].url
-        }))
+        results.map(result => {
+            // Extract the source from the inner result
+            if (result.status === 'fulfilled' && result.value) {
+                return result.value;
+            } else if (result.status === 'rejected') {
+                return {
+                    status: 'rejected',
+                    reason: result.reason,
+                    source: 'unknown'
+                };
+            }
+            return result;
+        })
     );
 }
 

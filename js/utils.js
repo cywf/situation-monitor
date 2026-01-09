@@ -49,6 +49,13 @@ export function getToday() {
 
 // Escape HTML for safe display
 export function escapeHtml(text) {
+    // Handle null, undefined, and non-string values
+    if (text === null || text === undefined) {
+        return '';
+    }
+    if (typeof text !== 'string') {
+        text = String(text);
+    }
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
