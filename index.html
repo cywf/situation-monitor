@@ -88,13 +88,16 @@
                     <span style="color: var(--red); margin-left: 0.5rem;">● High</span>
                 </span>
             </div>
-            <div class="panel-content" id="mapPanel" style="max-height: none; height: 550px; overflow: hidden; background: #0a1a14;">
+            <div class="panel-content" id="mapPanel" style="max-height: none; height: 550px; overflow: hidden; background: #0a1a14; position: relative;">
                 <svg id="mapSvg" style="width:100%;height:100%;"></svg>
+                <div id="mapTooltip" style="position:absolute;display:none;background:rgba(0,20,15,0.95);border:1px solid #00ff88;padding:8px 12px;border-radius:4px;font-size:11px;color:#00ff88;pointer-events:none;z-index:1000;max-width:200px;font-family:monospace;"></div>
             </div>
             <script>
                 // Inline map render with hotspots
                 (async function() {
                     const svg = d3.select('#mapSvg');
+                    const tooltip = document.getElementById('mapTooltip');
+                    const mapPanel = document.getElementById('mapPanel');
                     const width = 800, height = 500;
                     svg.attr('viewBox', `0 0 ${width} ${height}`);
 
@@ -105,22 +108,22 @@
 
                     const path = d3.geoPath().projection(projection);
 
-                    // Hotspots data
+                    // Hotspots data with descriptions
                     const hotspots = [
-                        { name: 'DC', lat: 38.9, lon: -77.0 },
-                        { name: 'Moscow', lat: 55.75, lon: 37.6 },
-                        { name: 'Beijing', lat: 39.9, lon: 116.4 },
-                        { name: 'Kyiv', lat: 50.45, lon: 30.5 },
-                        { name: 'Taipei', lat: 25.03, lon: 121.5 },
-                        { name: 'Tehran', lat: 35.7, lon: 51.4 },
-                        { name: 'Tel Aviv', lat: 32.07, lon: 34.78 },
-                        { name: 'London', lat: 51.5, lon: -0.12 },
-                        { name: 'Brussels', lat: 50.85, lon: 4.35 },
-                        { name: 'Pyongyang', lat: 39.03, lon: 125.75 },
-                        { name: 'Riyadh', lat: 24.7, lon: 46.7 },
-                        { name: 'Delhi', lat: 28.6, lon: 77.2 },
-                        { name: 'Singapore', lat: 1.35, lon: 103.82 },
-                        { name: 'Tokyo', lat: 35.68, lon: 139.76 }
+                        { name: 'DC', lat: 38.9, lon: -77.0, desc: 'Washington DC — US political center, White House, Pentagon, Capitol' },
+                        { name: 'Moscow', lat: 55.75, lon: 37.6, desc: 'Moscow — Kremlin, Russian military command, sanctions hub' },
+                        { name: 'Beijing', lat: 39.9, lon: 116.4, desc: 'Beijing — CCP headquarters, US-China tensions, tech rivalry' },
+                        { name: 'Kyiv', lat: 50.45, lon: 30.5, desc: 'Kyiv — Ukraine war, NATO expansion, Russian invasion' },
+                        { name: 'Taipei', lat: 25.03, lon: 121.5, desc: 'Taipei — Taiwan Strait tensions, TSMC, China threat' },
+                        { name: 'Tehran', lat: 35.7, lon: 51.4, desc: 'Tehran — Iran nuclear program, proxy conflicts, sanctions' },
+                        { name: 'Tel Aviv', lat: 32.07, lon: 34.78, desc: 'Tel Aviv — Israel-Gaza conflict, regional security, Mossad' },
+                        { name: 'London', lat: 51.5, lon: -0.12, desc: 'London — Financial center, Five Eyes, NATO ally' },
+                        { name: 'Brussels', lat: 50.85, lon: 4.35, desc: 'Brussels — EU/NATO headquarters, European policy' },
+                        { name: 'Pyongyang', lat: 39.03, lon: 125.75, desc: 'Pyongyang — North Korea nuclear threat, Kim regime' },
+                        { name: 'Riyadh', lat: 24.7, lon: 46.7, desc: 'Riyadh — Saudi oil, OPEC+, Middle East power broker' },
+                        { name: 'Delhi', lat: 28.6, lon: 77.2, desc: 'Delhi — India rising power, China border, tech hub' },
+                        { name: 'Singapore', lat: 1.35, lon: 103.82, desc: 'Singapore — Shipping chokepoint, Asian finance hub' },
+                        { name: 'Tokyo', lat: 35.68, lon: 139.76, desc: 'Tokyo — US ally, China tensions, economic power' }
                     ];
 
                     try {
@@ -147,6 +150,7 @@
                                 100% { r: 3; opacity: 0.9; }
                             }
                             .hotspot-pulse { animation: pulse 2s ease-in-out infinite; }
+                            .hotspot-hit { cursor: pointer; }
                         `;
                         document.head.appendChild(style);
 
@@ -170,6 +174,26 @@
                                     .attr('fill', '#00ff88').attr('font-size', '8px')
                                     .attr('font-family', 'monospace')
                                     .text(h.name);
+                                // Invisible hit area for tooltip
+                                svg.append('circle')
+                                    .attr('cx', x).attr('cy', y).attr('r', 12)
+                                    .attr('fill', 'transparent')
+                                    .attr('class', 'hotspot-hit')
+                                    .on('mouseenter', function(event) {
+                                        const rect = mapPanel.getBoundingClientRect();
+                                        tooltip.innerHTML = h.desc;
+                                        tooltip.style.display = 'block';
+                                        tooltip.style.left = (event.clientX - rect.left + 15) + 'px';
+                                        tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+                                    })
+                                    .on('mousemove', function(event) {
+                                        const rect = mapPanel.getBoundingClientRect();
+                                        tooltip.style.left = (event.clientX - rect.left + 15) + 'px';
+                                        tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+                                    })
+                                    .on('mouseleave', function() {
+                                        tooltip.style.display = 'none';
+                                    });
                             }
                         });
                     } catch(e) {
