@@ -21,7 +21,15 @@
 		SituationPanel,
 		WorldLeadersPanel,
 		PrinterPanel,
-		FedPanel
+		FedPanel,
+		AdsbPanel,
+		SatellitesPanel,
+		SpectrumPanel,
+		ShodanPanel,
+		WiglePanel,
+		SeismicPanel,
+		RfPropagationPanel,
+		AuroraPanel
 	} from '$lib/components/panels';
 	import {
 		news,
@@ -47,6 +55,17 @@
 	import type { Prediction, WhaleTransaction, Contract, Layoff } from '$lib/api';
 	import type { CustomMonitor, WorldLeader } from '$lib/types';
 	import type { PanelId } from '$lib/config';
+	import {
+		FEATURE_INTEL_SOURCES,
+		FEATURE_ADSB,
+		FEATURE_SATELLITES,
+		FEATURE_SPECTRUM,
+		FEATURE_SHODAN,
+		FEATURE_WIGLE,
+		FEATURE_SEISMIC,
+		FEATURE_RF_PROP,
+		FEATURE_AURORA
+	} from '$lib/config/features';
 
 	// Modal state
 	let settingsOpen = $state(false);
@@ -426,6 +445,57 @@
 				<div class="panel-slot">
 					<PrinterPanel />
 				</div>
+			{/if}
+
+			<!-- Intel Sources Panels (Feature Flagged) -->
+			{#if FEATURE_INTEL_SOURCES}
+				{#if FEATURE_ADSB && isPanelVisible('adsb')}
+					<div class="panel-slot">
+						<AdsbPanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_SATELLITES && isPanelVisible('satellites')}
+					<div class="panel-slot">
+						<SatellitesPanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_SPECTRUM && isPanelVisible('spectrum')}
+					<div class="panel-slot">
+						<SpectrumPanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_SHODAN && isPanelVisible('shodan')}
+					<div class="panel-slot">
+						<ShodanPanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_WIGLE && isPanelVisible('wigle')}
+					<div class="panel-slot">
+						<WiglePanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_SEISMIC && isPanelVisible('seismic')}
+					<div class="panel-slot">
+						<SeismicPanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_RF_PROP && isPanelVisible('rf-propagation')}
+					<div class="panel-slot">
+						<RfPropagationPanel />
+					</div>
+				{/if}
+
+				{#if FEATURE_AURORA && isPanelVisible('aurora')}
+					<div class="panel-slot">
+						<AuroraPanel />
+					</div>
+				{/if}
 			{/if}
 
 			<!-- Custom Monitors (always last) -->
